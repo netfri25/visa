@@ -238,6 +238,8 @@ bool cpu_fetch(struct Cpu* self, const struct CpuContext* ctx, struct Instructio
     void* ptr = ctx->memory + self->ip;
     memcpy(output, ptr, sizeof *output);
 
+    self->ip += sizeof(struct *output);
+
     return true;
 }
 
