@@ -158,6 +158,27 @@ static word_t arith_op_div(word_t lhs, word_t rhs, word_t* rem) {
     return lhs / rhs;
 }
 
+static word_t arith_op_and(word_t lhs, word_t rhs, word_t* rem) {
+    (void)! rem;
+    return lhs & rhs;
+}
+
+static word_t arith_op_xor(word_t lhs, word_t rhs, word_t* rem) {
+    (void)! rem;
+    return lhs ^ rhs;
+}
+
+static inline arith_op_t get_arith_op(enum Arith op) {
+    switch (op) {
+    case Arith_ADD: return arith_op_add;
+    case Arith_SUB: return arith_op_sub;
+    case Arith_MUL: return arith_op_mul;
+    case Arith_DIV: return arith_op_div;
+    case Arith_AND: return arith_op_and;
+    case Arith_XOR: return arith_op_xor;
+    }
+}
+
 static inline bool cpu_execute_arith(
     struct Cpu* self,
     struct CpuContext ctx,
@@ -167,16 +188,20 @@ static inline bool cpu_execute_arith(
 
     assert(!inst.horizontal && "TODO: horizontal operations not implemented");
 
-    arith_op_t const op =
-        inst.product
-        ? (inst.inverse ? arith_op_div : arith_op_mul)
-        : (inst.inverse ? arith_op_sub : arith_op_add);
+    arith_op_t const op = get_arith_op(inst.op);
 
     VECTORIZE(self, i, {
-        word_t const lhs = cpu_register_read(self, inst.lhs, i);
-        word_t const rhs = cpu_register_read(self, inst.rhs, i);
+        word_t lhs = cpu_register_read(self, inst.lhs, i);
+        if (inst.negate_lhs) lhs = ~lhs;
+
+        word_t rhs = cpu_register_read(self, inst.rhs, i);
+        if (inst.negate_rhs) rhs = ~rhs;
+
         word_t rem = 0;
-        word_t const dst = op(lhs, rhs, &rem);
+        word_t dst = op(lhs, rhs, &rem);
+        if (inst.negate_rem) rem = ~rem;
+        if (inst.negate_dst) dst = ~dst;
+
         cpu_register_write(self, inst.dst, i, dst);
         cpu_register_write(self, inst.rem, i, rem);
     });
@@ -228,22 +253,6 @@ static inline bool cpu_execute_ret(
 
     self->ip = value;
     return true;
-}
-
-static inline bool cpu_execute_and(
-    struct Cpu* self,
-    struct CpuContext ctx,
-    struct Inst_and inst
-) {
-    assert(false && "TODO: not implemented");
-}
-
-static inline bool cpu_execute_xor(
-    struct Cpu* self,
-    struct CpuContext ctx,
-    struct Inst_xor inst
-) {
-    assert(false && "TODO: not implemented");
 }
 
 static inline bool cpu_execute_inter(

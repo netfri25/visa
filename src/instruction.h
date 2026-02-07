@@ -12,8 +12,6 @@
     INST(jz) \
     INST(bz) \
     INST(ret) \
-    INST(and) \
-    INST(xor) \
     INST(inter)
 
 
@@ -59,15 +57,27 @@ INSTRUCTION(copy, {
     uint16_t value : 16;
 });
 
+// TODO: do I want something similar to vpternlog?
+enum Arith {
+    Arith_ADD,
+    Arith_SUB,
+    Arith_MUL,
+    Arith_DIV,
+    Arith_AND,
+    Arith_XOR,
+};
+
 INSTRUCTION(arith, {
     REGISTER_FIELD(dst);
     REGISTER_FIELD(lhs);
     REGISTER_FIELD(rhs);
     REGISTER_FIELD(rem);
-    PAD(5);
-    bool product : 1; // when false, add/sub. when true, mul/div.
-    bool inverse : 1; // when false, add/mul. when true, sub/div.
+    bool negate_dst : 1;
+    bool negate_lhs : 1;
+    bool negate_rhs : 1;
+    bool negate_rem : 1;
     bool horizontal : 1;
+    enum Arith op : 3;
 });
 
 INSTRUCTION(jz, {
@@ -85,27 +95,6 @@ INSTRUCTION(bz, {
 INSTRUCTION(ret, {
     // C doesn't allow empty structs, but `ret` should be empty.
     uint8_t _ : 1;
-});
-
-// the `and` instruction can be an `or` instruction when all `negate_*` are true
-INSTRUCTION(and, {
-    REGISTER_FIELD(dst);
-    REGISTER_FIELD(lhs);
-    REGISTER_FIELD(rhs);
-    bool negate_dst : 1;
-    bool negate_lhs : 1;
-    bool negate_rhs : 1;
-    bool horizontal : 1;
-});
-
-INSTRUCTION(xor, {
-    REGISTER_FIELD(dst);
-    REGISTER_FIELD(lhs);
-    REGISTER_FIELD(rhs);
-    bool negate_dst : 1;
-    bool negate_lhs : 1;
-    bool negate_rhs : 1;
-    bool horizontal : 1;
 });
 
 INSTRUCTION(inter, {
@@ -126,9 +115,6 @@ union InstructionVariant {
     INSTRUCTION_FIELD(jz);
     INSTRUCTION_FIELD(bz);
     INSTRUCTION_FIELD(ret);
-
-    INSTRUCTION_FIELD(and);
-    INSTRUCTION_FIELD(xor);
 
     INSTRUCTION_FIELD(inter);
 } __attribute__((packed));

@@ -18,8 +18,11 @@ void test_add(struct Cpu* cpu) {
         .lhs = Reg_R01,
         .rhs = Reg_R02,
         .rem = Reg_RF,
-        .inverse = false,
-        .product = false,
+        .op = Arith_ADD,
+        .negate_dst = false,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -38,8 +41,11 @@ void test_sub(struct Cpu* cpu) {
         .lhs = Reg_R01,
         .rhs = Reg_R02,
         .rem = Reg_RF,
-        .inverse = true,
-        .product = false,
+        .op = Arith_SUB,
+        .negate_dst = false,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -58,8 +64,11 @@ void test_mul(struct Cpu* cpu) {
         .lhs = Reg_R01,
         .rhs = Reg_R02,
         .rem = Reg_RF,
-        .inverse = false,
-        .product = true,
+        .op = Arith_MUL,
+        .negate_dst = false,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -78,8 +87,11 @@ void test_div(struct Cpu* cpu) {
         .lhs = Reg_R01,
         .rhs = Reg_R02,
         .rem = Reg_R03,
-        .inverse = true,
-        .product = true,
+        .op = Arith_DIV,
+        .negate_dst = false,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -99,6 +111,97 @@ void test_div(struct Cpu* cpu) {
     }
 }
 
+void test_nand(struct Cpu* cpu) {
+    struct Inst_arith const inst = {
+        .dst = Reg_R00,
+        .lhs = Reg_R01,
+        .rhs = Reg_R02,
+        .rem = Reg_RF,
+        .op = Arith_AND,
+        .negate_dst = true,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
+    };
+
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
+
+    for (size_t i = 0; i <= cpu->vlen; i++) {
+        word_t const lhs = cpu->registers[Reg_R01].lane[i];
+        word_t const rhs = cpu->registers[Reg_R02].lane[i];
+        word_t const res = cpu->registers[Reg_R00].lane[i];
+        assert(~(lhs & rhs) == res);
+    }
+}
+
+void test_or(struct Cpu* cpu) {
+    struct Inst_arith const inst = {
+        .dst = Reg_R00,
+        .lhs = Reg_R01,
+        .rhs = Reg_R02,
+        .rem = Reg_RF,
+        .op = Arith_AND,
+        .negate_dst = true,
+        .negate_lhs = true,
+        .negate_rhs = true,
+        .negate_rem = false,
+    };
+
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
+
+    for (size_t i = 0; i <= cpu->vlen; i++) {
+        word_t const lhs = cpu->registers[Reg_R01].lane[i];
+        word_t const rhs = cpu->registers[Reg_R02].lane[i];
+        word_t const res = cpu->registers[Reg_R00].lane[i];
+        assert((lhs | rhs) == res);
+    }
+}
+
+void test_xor(struct Cpu* cpu) {
+    struct Inst_arith const inst = {
+        .dst = Reg_R00,
+        .lhs = Reg_R01,
+        .rhs = Reg_R02,
+        .rem = Reg_RF,
+        .op = Arith_XOR,
+        .negate_dst = false,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
+    };
+
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
+
+    for (size_t i = 0; i <= cpu->vlen; i++) {
+        word_t const lhs = cpu->registers[Reg_R01].lane[i];
+        word_t const rhs = cpu->registers[Reg_R02].lane[i];
+        word_t const res = cpu->registers[Reg_R00].lane[i];
+        assert((lhs ^ rhs) == res);
+    }
+}
+
+void test_not(struct Cpu* cpu) {
+    struct Inst_arith const inst = {
+        .dst = Reg_R00,
+        .lhs = Reg_R01,
+        .rhs = Reg_RT,
+        .rem = Reg_RF,
+        .op = Arith_XOR,
+        .negate_dst = false,
+        .negate_lhs = false,
+        .negate_rhs = false,
+        .negate_rem = false,
+    };
+
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
+
+    for (size_t i = 0; i <= cpu->vlen; i++) {
+        word_t const lhs = cpu->registers[Reg_R01].lane[i];
+        word_t const res = cpu->registers[Reg_R00].lane[i];
+        assert(~lhs == res);
+    }
+}
+
 int main(void) {
     srand(time(NULL));
 
@@ -107,6 +210,10 @@ int main(void) {
     test_sub(cpu);
     test_mul(cpu);
     test_div(cpu);
+    test_nand(cpu);
+    test_or(cpu);
+    test_xor(cpu);
+    test_not(cpu);
 
     return 0;
 }
