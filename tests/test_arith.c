@@ -28,9 +28,9 @@ void test_add(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert(lhs + rhs == res);
     }
 }
@@ -51,9 +51,9 @@ void test_sub(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert(lhs - rhs == res);
     }
 }
@@ -74,9 +74,9 @@ void test_mul(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert(lhs * rhs == res);
     }
 }
@@ -97,10 +97,10 @@ void test_div(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
-        word_t const rem = cpu->registers[Reg_R03].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
+        word_t const rem = cpu_register_read(cpu, Reg_R03, i);
         if (rhs == 0) {
             assert(res == 0);
             assert(rem == 0);
@@ -127,9 +127,9 @@ void test_nand(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert(~(lhs & rhs) == res);
     }
 }
@@ -150,9 +150,9 @@ void test_or(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert((lhs | rhs) == res);
     }
 }
@@ -173,9 +173,9 @@ void test_xor(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const rhs = cpu->registers[Reg_R02].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const rhs = cpu_register_read(cpu, Reg_R02, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert((lhs ^ rhs) == res);
     }
 }
@@ -196,8 +196,8 @@ void test_not(struct Cpu* cpu) {
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
-        word_t const lhs = cpu->registers[Reg_R01].lane[i];
-        word_t const res = cpu->registers[Reg_R00].lane[i];
+        word_t const lhs = cpu_register_read(cpu, Reg_R01, i);
+        word_t const res = cpu_register_read(cpu, Reg_R00, i);
         assert(~lhs == res);
     }
 }
