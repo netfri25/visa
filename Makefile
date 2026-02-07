@@ -6,7 +6,7 @@ CFLAGS = -std=c23 -Wall -Wextra -pedantic -I$(INCLUDE_DIR)
 SRC := $(wildcard src/*.c)
 OBJ := $(patsubst src/%.c, $(BUILD_DIR)/%.o, $(SRC))
 
-all: $(BUILD_DIR)/main
+all: $(BUILD_DIR)/main test
 
 $(BUILD_DIR)/main: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -21,4 +21,4 @@ test:
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all clean
+.PHONY: all clean test
