@@ -118,13 +118,54 @@ static inline bool cpu_execute_copy(
     return true;
 }
 
+typedef word_t (*arith_op_t)(word_t lhs, word_t rhs, word_t* rem);
+
+static word_t arith_op_add(word_t lhs, word_t rhs, word_t* rem) {
+    (void)! rem;
+    return lhs + rhs;
+}
+
+static word_t arith_op_sub(word_t lhs, word_t rhs, word_t* rem) {
+    (void)! rem;
+    return lhs - rhs;
+}
+
+static word_t arith_op_mul(word_t lhs, word_t rhs, word_t* rem) {
+    // FIXME: it's popular to allow 2*word multiplication for the lhs. should this support it?
+    (void)! rem;
+    return lhs * rhs;
+}
+
+static word_t arith_op_div(word_t lhs, word_t rhs, word_t* rem) {
+    (void)! rem;
+    *rem = lhs % rhs;
+    return lhs / rhs;
+}
+
 static inline bool cpu_execute_arith(
     struct Cpu* self,
     const struct CpuContext* ctx,
     struct Inst_arith inst
 ) {
+    (void)! ctx;
+
     assert(!inst.horizontal && "TODO: horizontal operations not implemented");
-    assert(false && "TODO: not implemented");
+
+    arith_op_t const op =
+        inst.product
+        ? (inst.inverse ? arith_op_div : arith_op_mul)
+        : (inst.inverse ? arith_op_sub : arith_op_add);
+
+    VECTORIZE(self, i, {
+        word_t const lhs = cpu_register_read(self, inst.lhs, i);
+        word_t const rhs = cpu_register_read(self, inst.lhs, i);
+        word_t rem = 0;
+        word_t const dst = op(lhs, rhs, &rem);
+        cpu_register_write(self, inst.dst, i, dst);
+        cpu_register_write(self, inst.rem, i, rem);
+    });
+
+    return true;
 }
 
 static inline bool cpu_execute_jz(
