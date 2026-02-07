@@ -55,6 +55,15 @@ static inline void cpu_register_write(struct Cpu* self, enum RegisterName reg_na
     reg->lane[lane] = value;
 }
 
+static inline bool cpu_is_register_zero(struct Cpu* self, enum RegisterName reg_name) {
+    VECTORIZE(self, i, {
+        if (cpu_register_read(self, reg_name, i) != 0) {
+            return false;
+        }
+    });
+
+    return true;
+}
 
 static inline bool cpu_execute_vlenset(
     struct Cpu* self,
@@ -180,7 +189,13 @@ static inline bool cpu_execute_jz(
     struct CpuContext ctx,
     struct Inst_jz inst
 ) {
-    assert(false && "TODO: not implemented");
+    (void) ctx;
+
+    if (cpu_is_register_zero(self, inst.flag)) {
+        self->ip += inst.offset;
+    }
+
+    return true;
 }
 
 static inline bool cpu_execute_bz(
@@ -188,7 +203,15 @@ static inline bool cpu_execute_bz(
     struct CpuContext ctx,
     struct Inst_bz inst
 ) {
-    assert(false && "TODO: not implemented");
+    if (cpu_is_register_zero(self, inst.flag)) {
+        if (!cpu_push_word(self, ctx, self->ip)) {
+            return false;
+        }
+
+        self->ip += inst.offset;
+    }
+
+    return true;
 }
 
 static inline bool cpu_execute_ret(
@@ -196,7 +219,15 @@ static inline bool cpu_execute_ret(
     struct CpuContext ctx,
     struct Inst_ret inst
 ) {
-    assert(false && "TODO: not implemented");
+    (void) inst;
+
+    word_t value;
+    if (!cpu_pop_word(self, ctx, &value)) {
+        return false;
+    }
+
+    self->ip = value;
+    return true;
 }
 
 static inline bool cpu_execute_and(
