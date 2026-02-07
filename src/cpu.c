@@ -5,7 +5,7 @@
 
 #define VECTORIZE(_cpu, _index, _body) \
     do { \
-        for (size_t _index = 0; _index < (size_t) (_cpu)->vlen + 1; _index++) { \
+        for (size_t _index = 0; _index < (size_t)((_cpu)->vlen) + 1; _index++) { \
             if (cpu_mask_register_read(_cpu, _index)) _body \
         } \
     } while (0)
@@ -138,6 +138,12 @@ static word_t arith_op_mul(word_t lhs, word_t rhs, word_t* rem) {
 
 static word_t arith_op_div(word_t lhs, word_t rhs, word_t* rem) {
     (void)! rem;
+
+    if (rhs == 0) {
+        *rem = 0;
+        return 0;
+    }
+
     *rem = lhs % rhs;
     return lhs / rhs;
 }
@@ -158,7 +164,7 @@ static inline bool cpu_execute_arith(
 
     VECTORIZE(self, i, {
         word_t const lhs = cpu_register_read(self, inst.lhs, i);
-        word_t const rhs = cpu_register_read(self, inst.lhs, i);
+        word_t const rhs = cpu_register_read(self, inst.rhs, i);
         word_t rem = 0;
         word_t const dst = op(lhs, rhs, &rem);
         cpu_register_write(self, inst.dst, i, dst);
