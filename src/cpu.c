@@ -55,6 +55,13 @@ static struct RegisterWriter cpu_get_register_writer(struct Cpu* self, enum Regi
     }
 
 
+#define READER(_cpu, _inst, _name) \
+    struct RegisterReader _name##_reader = cpu_get_register_reader(_cpu, _inst._name)
+
+#define WRITER(_cpu, _inst, _name) \
+    struct RegisterWriter _name##_writer = cpu_get_register_writer(_cpu, _inst._name)
+
+
 static inline bool cpu_execute_vlenset(
     struct Cpu* self,
     const struct CpuContext* ctx,
@@ -72,12 +79,12 @@ static inline bool cpu_execute_maskset(
 ) {
     (void)! ctx;
 
-    struct RegisterReader reader = cpu_get_register_reader(self, inst.src);
-    struct RegisterWriter writer = cpu_get_mask_register_writer(self);
+    READER(self, inst, src);
+    struct RegisterWriter mask_writer = cpu_get_mask_register_writer(self);
 
     for (size_t i = 0; i < (size_t) self->vlen + 1; i++) {
-        word_t const value = register_reader_read_at(reader, i);
-        register_writer_write_at(writer, i, value);
+        word_t const value = register_reader_read_at(src_reader, i);
+        register_writer_write_at(mask_writer, i, value);
     }
 
     return true;
@@ -89,23 +96,23 @@ static inline bool cpu_execute_memory(
     struct Inst_memory inst
 ) {
     if (inst.store) {
-        struct RegisterReader ptr_reader = cpu_get_register_reader(self, inst.ptr);
-        struct RegisterReader src_reader = cpu_get_register_reader(self, inst.reg);
+        READER(self, inst, ptr);
+        READER(self, inst, reg);
 
         VECTORIZE(self, i, {
-            word_t const value = register_reader_read_at(src_reader, i);
+            word_t const value = register_reader_read_at(reg_reader, i);
             byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
             memcpy(ptr, &value, inst.bytes_count);
         });
     } else {
-        struct RegisterReader ptr_reader = cpu_get_register_reader(self, inst.ptr);
-        struct RegisterWriter dst_writer = cpu_get_register_writer(self, inst.reg);
+        READER(self, inst, ptr);
+        WRITER(self, inst, reg);
 
         VECTORIZE(self, i, {
             word_t value = 0;
             byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
             memcpy(&value, ptr, inst.bytes_count);
-            register_writer_write_at(dst_writer, i, value);
+            register_writer_write_at(reg_writer, i, value);
         });
     }
 
@@ -119,7 +126,7 @@ static inline bool cpu_execute_copy(
 ) {
     (void)! ctx;
 
-    struct RegisterWriter dst_writer = cpu_get_register_writer(self, inst.dst);
+    WRITER(self, inst, dst);
 
     VECTORIZE(self, i, {
         register_writer_write_at(dst_writer, i, (word_t)(inst.value) << (16 * inst.upper));
