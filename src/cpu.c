@@ -1,65 +1,59 @@
 #include "cpu.h"
 
-#include "register_reader.h"
-#include "register_writer.h"
-
 #include <string.h>
 #include <assert.h>
 
-static struct RegisterReader cpu_get_mask_register_reader(struct Cpu* self) {
-    return (struct RegisterReader) {
-        .reg = &self->mask_register,
-        .read_at = (RegisterReader_read_at_t) mask_register_read_at,
-    };
-}
-
-static struct RegisterWriter cpu_get_mask_register_writer(struct Cpu* self) {
-    return (struct RegisterWriter) {
-        .reg = &self->mask_register,
-        .write_at = (RegisterWriter_write_at_t) mask_register_write_at,
-    };
-}
-
-
-static struct RegisterReader cpu_get_register_reader(struct Cpu* self, enum RegisterName reg_name) {
-    if (reg_name == Reg_RF) {
-        return zero_reader;
-    }
-
-    if (reg_name == Reg_RT) {
-        return ones_reader;
-    }
-
-    return (struct RegisterReader) {
-        .reg = &self->registers[reg_name],
-        .read_at = (RegisterReader_read_at_t) normal_register_read_at,
-    };
-}
-
-static struct RegisterWriter cpu_get_register_writer(struct Cpu* self, enum RegisterName reg_name) {
-    if (reg_name == Reg_RF || reg_name == Reg_RT) {
-        return no_register_writer;
-    }
-
-    return (struct RegisterWriter) {
-        .reg = &self->registers[reg_name],
-        .write_at = (RegisterWriter_write_at_t) normal_register_write_at,
-    };
-}
-
-
 #define VECTORIZE(_cpu, _index, _body) \
-    struct RegisterReader mask_register_reader = cpu_get_mask_register_reader(_cpu); \
-    for (size_t _index = 0; _index < (size_t) (_cpu)->vlen + 1; _index++) { \
-        if (register_reader_read_at(mask_register_reader, _index)) _body \
+    do { \
+        for (size_t _index = 0; _index < (size_t) (_cpu)->vlen + 1; _index++) { \
+            if (cpu_mask_register_read(_cpu, _index)) _body \
+        } \
+    } while (0)
+
+
+static inline bool cpu_mask_register_read(struct Cpu* self, size_t index) {
+    if (index > 8 * sizeof self->mask_register.mask / sizeof *self->mask_register.mask) {
+        return 0;
     }
 
+    size_t const byte_index = index / 8;
+    size_t const bit_index = index % 8;
+    bool const value = (self->mask_register.mask[byte_index] >> bit_index) & 1;
+    return value;
+}
 
-#define READER(_cpu, _inst, _name) \
-    struct RegisterReader _name##_reader = cpu_get_register_reader(_cpu, _inst._name)
+static inline void cpu_mask_register_write(struct Cpu* self, size_t index, bool value) {
+    if (index > 8 * sizeof self->mask_register.mask / sizeof *self->mask_register.mask) {
+        return;
+    }
 
-#define WRITER(_cpu, _inst, _name) \
-    struct RegisterWriter _name##_writer = cpu_get_register_writer(_cpu, _inst._name)
+    size_t const byte_index = index / 8;
+    size_t const bit_index = index % 8;
+    self->mask_register.mask[byte_index] |= (value != 0) << bit_index;
+}
+
+static inline word_t cpu_register_read(struct Cpu* self, enum RegisterName reg_name, size_t lane) {
+    if (reg_name == Reg_RF) return 0;
+    if (reg_name == Reg_RT) return (word_t) -1;
+
+    struct Register* const reg = &self->registers[reg_name];
+    if (lane >= sizeof reg->lane / sizeof *reg->lane) {
+        return 0;
+    }
+
+    return reg->lane[lane];
+}
+
+static inline void cpu_register_write(struct Cpu* self, enum RegisterName reg_name, size_t lane, word_t value) {
+    if (reg_name == Reg_RF || reg_name == Reg_RT) return;
+
+    struct Register* const reg = &self->registers[reg_name];
+    if (lane >= sizeof reg->lane / sizeof *reg->lane) {
+        return;
+    }
+
+    reg->lane[lane] = value;
+}
 
 
 static inline bool cpu_execute_vlenset(
@@ -79,12 +73,9 @@ static inline bool cpu_execute_maskset(
 ) {
     (void)! ctx;
 
-    READER(self, inst, src);
-    struct RegisterWriter mask_writer = cpu_get_mask_register_writer(self);
-
     for (size_t i = 0; i < (size_t) self->vlen + 1; i++) {
-        word_t const value = register_reader_read_at(src_reader, i);
-        register_writer_write_at(mask_writer, i, value);
+        word_t const value = cpu_register_read(self, inst.src, i);
+        cpu_mask_register_write(self, i, value != 0);
     }
 
     return true;
@@ -96,23 +87,17 @@ static inline bool cpu_execute_memory(
     struct Inst_memory inst
 ) {
     if (inst.store) {
-        READER(self, inst, ptr);
-        READER(self, inst, reg);
-
         VECTORIZE(self, i, {
-            word_t const value = register_reader_read_at(reg_reader, i);
-            byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
+            word_t const value = cpu_register_read(self, inst.reg, i);
+            byte_t* const ptr = ctx->memory + cpu_register_read(self, inst.ptr, i);
             memcpy(ptr, &value, inst.bytes_count);
         });
     } else {
-        READER(self, inst, ptr);
-        WRITER(self, inst, reg);
-
         VECTORIZE(self, i, {
             word_t value = 0;
-            byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
+            byte_t* const ptr = ctx->memory + cpu_register_read(self, inst.ptr, i);
             memcpy(&value, ptr, inst.bytes_count);
-            register_writer_write_at(reg_writer, i, value);
+            cpu_register_write(self, inst.reg, i, value);
         });
     }
 
@@ -126,10 +111,8 @@ static inline bool cpu_execute_copy(
 ) {
     (void)! ctx;
 
-    WRITER(self, inst, dst);
-
     VECTORIZE(self, i, {
-        register_writer_write_at(dst_writer, i, (word_t)(inst.value) << (16 * inst.upper));
+        cpu_register_write(self, inst.dst, i, (word_t)(inst.value) << (16 * inst.upper));
     });
 
     return true;
