@@ -44,6 +44,10 @@
 
 ## Instructions
 
+for detailed and correct information, take a look at [this header](./src/instruction.h)
+
+TODO: update isa from here
+
 ### vector info registers
  - `vlenset imm8`
  - `maskset r` - `vmask[bit i] = r[byte i] != 0`

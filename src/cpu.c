@@ -83,37 +83,31 @@ static inline bool cpu_execute_maskset(
     return true;
 }
 
-static inline bool cpu_execute_load(
+static inline bool cpu_execute_memory(
     struct Cpu* self,
     const struct CpuContext* ctx,
-    struct Inst_load inst
+    struct Inst_memory inst
 ) {
-    struct RegisterReader ptr_reader = cpu_get_register_reader(self, inst.ptr);
-    struct RegisterWriter dst_writer = cpu_get_register_writer(self, inst.dst);
+    if (inst.store) {
+        struct RegisterReader ptr_reader = cpu_get_register_reader(self, inst.ptr);
+        struct RegisterReader src_reader = cpu_get_register_reader(self, inst.reg);
 
-    VECTORIZE(self, i, {
-        word_t value = 0;
-        byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
-        memcpy(&value, ptr, inst.bytes_count);
-        register_writer_write_at(dst_writer, i, value);
-    });
+        VECTORIZE(self, i, {
+            word_t const value = register_reader_read_at(src_reader, i);
+            byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
+            memcpy(ptr, &value, inst.bytes_count);
+        });
+    } else {
+        struct RegisterReader ptr_reader = cpu_get_register_reader(self, inst.ptr);
+        struct RegisterWriter dst_writer = cpu_get_register_writer(self, inst.reg);
 
-    return true;
-}
-
-static inline bool cpu_execute_store(
-    struct Cpu* self,
-    const struct CpuContext* ctx,
-    struct Inst_store inst
-) {
-    struct RegisterReader ptr_reader = cpu_get_register_reader(self, inst.ptr);
-    struct RegisterReader src_reader = cpu_get_register_reader(self, inst.src);
-
-    VECTORIZE(self, i, {
-        word_t const value = register_reader_read_at(src_reader, i);
-        byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
-        memcpy(ptr, &value, inst.bytes_count);
-    });
+        VECTORIZE(self, i, {
+            word_t value = 0;
+            byte_t* const ptr = ctx->memory + register_reader_read_at(ptr_reader, i);
+            memcpy(&value, ptr, inst.bytes_count);
+            register_writer_write_at(dst_writer, i, value);
+        });
+    }
 
     return true;
 }
@@ -134,36 +128,12 @@ static inline bool cpu_execute_copy(
     return true;
 }
 
-static inline bool cpu_execute_add(
+static inline bool cpu_execute_arith(
     struct Cpu* self,
     const struct CpuContext* ctx,
-    struct Inst_add inst
+    struct Inst_arith inst
 ) {
     assert(!inst.horizontal && "TODO: horizontal operations not implemented");
-    assert(false && "TODO: not implemented");
-}
-
-static inline bool cpu_execute_sub(
-    struct Cpu* self,
-    const struct CpuContext* ctx,
-    struct Inst_sub inst
-) {
-    assert(false && "TODO: not implemented");
-}
-
-static inline bool cpu_execute_mul(
-    struct Cpu* self,
-    const struct CpuContext* ctx,
-    struct Inst_mul inst
-) {
-    assert(false && "TODO: not implemented");
-}
-
-static inline bool cpu_execute_div(
-    struct Cpu* self,
-    const struct CpuContext* ctx,
-    struct Inst_div inst
-) {
     assert(false && "TODO: not implemented");
 }
 
@@ -195,14 +165,6 @@ static inline bool cpu_execute_and(
     struct Cpu* self,
     const struct CpuContext* ctx,
     struct Inst_and inst
-) {
-    assert(false && "TODO: not implemented");
-}
-
-static inline bool cpu_execute_or(
-    struct Cpu* self,
-    const struct CpuContext* ctx,
-    struct Inst_or inst
 ) {
     assert(false && "TODO: not implemented");
 }

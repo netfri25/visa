@@ -6,18 +6,13 @@
 #define INSTRUCTIONS \
     INST(vlenset) \
     INST(maskset) \
-    INST(load) \
-    INST(store) \
+    INST(memory) \
     INST(copy) \
-    INST(add) \
-    INST(sub) \
-    INST(mul) \
-    INST(div) \
+    INST(arith) \
     INST(jz) \
     INST(bz) \
     INST(ret) \
     INST(and) \
-    INST(or) \
     INST(xor) \
     INST(inter)
 
@@ -37,6 +32,7 @@ INSTRUCTIONS
 
 
 #define REGISTER_FIELD(name) enum RegisterName name : 4
+#define PAD(_bits) uint8_t : _bits
 
 
 INSTRUCTION(vlenset, {
@@ -48,86 +44,57 @@ INSTRUCTION(maskset, {
     REGISTER_FIELD(src);
 });
 
-INSTRUCTION(load, {
-    REGISTER_FIELD(dst);
+INSTRUCTION(memory, {
+    REGISTER_FIELD(reg);
     REGISTER_FIELD(ptr);
-    uint8_t bytes_count : 2;
-});
-
-INSTRUCTION(store, {
-    REGISTER_FIELD(src);
-    REGISTER_FIELD(ptr);
-    uint8_t _pad : 6;
+    PAD(5);
+    bool store : 1; // load/store
     uint8_t bytes_count : 2;
 });
 
 INSTRUCTION(copy, {
     REGISTER_FIELD(dst);
-    uint8_t _pad : 3;
+    PAD(3);
     bool upper : 1;
     uint16_t value : 16;
 });
 
-INSTRUCTION(add, {
+INSTRUCTION(arith, {
     REGISTER_FIELD(dst);
     REGISTER_FIELD(lhs);
     REGISTER_FIELD(rhs);
-    uint8_t _pad : 4;
-    bool horizontal : 1;
-});
-
-INSTRUCTION(sub, {
-    REGISTER_FIELD(dst);
-    REGISTER_FIELD(lhs);
-    REGISTER_FIELD(rhs);
-    uint8_t _pad : 4;
-    bool horizontal : 1;
-});
-
-INSTRUCTION(mul, {
-    REGISTER_FIELD(dst);
-    REGISTER_FIELD(lhs);
-    REGISTER_FIELD(rhs);
-    uint8_t _pad : 4;
-    bool horizontal : 1;
-});
-
-INSTRUCTION(div, {
-    REGISTER_FIELD(dst);
-    REGISTER_FIELD(lhs);
-    REGISTER_FIELD(rhs);
-    REGISTER_FIELD(remainder);
+    REGISTER_FIELD(rem);
+    PAD(5);
+    bool product : 1; // when false, add/sub. when true, mul/div.
+    bool inverse : 1; // when false, add/mul. when true, sub/div.
     bool horizontal : 1;
 });
 
 INSTRUCTION(jz, {
     REGISTER_FIELD(flag);
+    PAD(4);
     uint16_t offset;
 });
 
 INSTRUCTION(bz, {
     REGISTER_FIELD(flag);
+    PAD(4);
     uint16_t offset;
 });
 
 INSTRUCTION(ret, {
     // C doesn't allow empty structs, but `ret` should be empty.
-    uint8_t _something : 1;
+    uint8_t _ : 1;
 });
 
+// the `and` instruction can be an `or` instruction when all `negate_*` are true
 INSTRUCTION(and, {
     REGISTER_FIELD(dst);
     REGISTER_FIELD(lhs);
     REGISTER_FIELD(rhs);
-    uint8_t _pad : 4;
-    bool horizontal : 1;
-});
-
-INSTRUCTION(or, {
-    REGISTER_FIELD(dst);
-    REGISTER_FIELD(lhs);
-    REGISTER_FIELD(rhs);
-    uint8_t _pad : 4;
+    bool negate_dst : 1;
+    bool negate_lhs : 1;
+    bool negate_rhs : 1;
     bool horizontal : 1;
 });
 
@@ -135,7 +102,9 @@ INSTRUCTION(xor, {
     REGISTER_FIELD(dst);
     REGISTER_FIELD(lhs);
     REGISTER_FIELD(rhs);
-    uint8_t _pad : 4;
+    bool negate_dst : 1;
+    bool negate_lhs : 1;
+    bool negate_rhs : 1;
     bool horizontal : 1;
 });
 
@@ -149,21 +118,16 @@ union InstructionVariant {
     INSTRUCTION_FIELD(vlenset);
     INSTRUCTION_FIELD(maskset);
 
-    INSTRUCTION_FIELD(load);
-    INSTRUCTION_FIELD(store);
+    INSTRUCTION_FIELD(memory);
     INSTRUCTION_FIELD(copy);
 
-    INSTRUCTION_FIELD(add);
-    INSTRUCTION_FIELD(sub);
-    INSTRUCTION_FIELD(mul);
-    INSTRUCTION_FIELD(div);
+    INSTRUCTION_FIELD(arith);
 
     INSTRUCTION_FIELD(jz);
     INSTRUCTION_FIELD(bz);
     INSTRUCTION_FIELD(ret);
 
     INSTRUCTION_FIELD(and);
-    INSTRUCTION_FIELD(or);
     INSTRUCTION_FIELD(xor);
 
     INSTRUCTION_FIELD(inter);
@@ -179,5 +143,6 @@ struct Instruction {
 
 
 #undef INSTRUCTION_FIELD
+#undef PAD
 #undef REGISTER_FIELD
 #undef INSTRUCTION
