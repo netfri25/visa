@@ -112,7 +112,8 @@ static inline bool cpu_execute_copy(
     (void) ctx;
 
     VECTORIZE(self, i, {
-        cpu_register_write(self, inst.dst, i, (word_t)(inst.value) << (16 * inst.upper));
+        word_t const value = (word_t)(inst.value) << (16 * inst.upper);
+        cpu_register_write(self, inst.dst, i, value);
     });
 
     return true;
