@@ -22,10 +22,10 @@ struct CpuContext {
 
 void cpu_init(struct Cpu* self, word_t stack_end);
 
-bool cpu_fetch(struct Cpu* self, const struct CpuContext* ctx, struct Instruction* output);
+bool cpu_fetch(struct Cpu* self, struct CpuContext ctx, struct Instruction* output);
 
-bool cpu_execute(struct Cpu* self, const struct CpuContext* ctx, struct Instruction inst);
+bool cpu_execute(struct Cpu* self, struct CpuContext ctx, struct Instruction inst);
 
-bool cpu_push_word(struct Cpu* self, struct CpuContext* ctx, word_t word);
+bool cpu_push_word(struct Cpu* self, struct CpuContext ctx, word_t word);
 
-bool cpu_pop_word(struct Cpu* self, struct CpuContext* ctx, word_t* output);
+bool cpu_pop_word(struct Cpu* self, struct CpuContext ctx, word_t* output);

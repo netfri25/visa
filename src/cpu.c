@@ -58,20 +58,20 @@ static inline void cpu_register_write(struct Cpu* self, enum RegisterName reg_na
 
 static inline bool cpu_execute_vlenset(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_vlenset inst
 ) {
-    (void)! ctx;
+    (void) ctx;
     self->vlen = inst.value;
     return true;
 }
 
 static inline bool cpu_execute_maskset(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_maskset inst
 ) {
-    (void)! ctx;
+    (void) ctx;
 
     for (size_t i = 0; i < (size_t) self->vlen + 1; i++) {
         word_t const value = cpu_register_read(self, inst.src, i);
@@ -83,19 +83,19 @@ static inline bool cpu_execute_maskset(
 
 static inline bool cpu_execute_memory(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_memory inst
 ) {
     if (inst.store) {
         VECTORIZE(self, i, {
             word_t const value = cpu_register_read(self, inst.reg, i);
-            byte_t* const ptr = ctx->memory + cpu_register_read(self, inst.ptr, i);
+            byte_t* const ptr = ctx.memory + cpu_register_read(self, inst.ptr, i);
             memcpy(ptr, &value, inst.bytes_count);
         });
     } else {
         VECTORIZE(self, i, {
             word_t value = 0;
-            byte_t* const ptr = ctx->memory + cpu_register_read(self, inst.ptr, i);
+            byte_t* const ptr = ctx.memory + cpu_register_read(self, inst.ptr, i);
             memcpy(&value, ptr, inst.bytes_count);
             cpu_register_write(self, inst.reg, i, value);
         });
@@ -106,10 +106,10 @@ static inline bool cpu_execute_memory(
 
 static inline bool cpu_execute_copy(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_copy inst
 ) {
-    (void)! ctx;
+    (void) ctx;
 
     VECTORIZE(self, i, {
         cpu_register_write(self, inst.dst, i, (word_t)(inst.value) << (16 * inst.upper));
@@ -150,10 +150,10 @@ static word_t arith_op_div(word_t lhs, word_t rhs, word_t* rem) {
 
 static inline bool cpu_execute_arith(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_arith inst
 ) {
-    (void)! ctx;
+    (void) ctx;
 
     assert(!inst.horizontal && "TODO: horizontal operations not implemented");
 
@@ -176,7 +176,7 @@ static inline bool cpu_execute_arith(
 
 static inline bool cpu_execute_jz(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_jz inst
 ) {
     assert(false && "TODO: not implemented");
@@ -184,7 +184,7 @@ static inline bool cpu_execute_jz(
 
 static inline bool cpu_execute_bz(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_bz inst
 ) {
     assert(false && "TODO: not implemented");
@@ -192,7 +192,7 @@ static inline bool cpu_execute_bz(
 
 static inline bool cpu_execute_ret(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_ret inst
 ) {
     assert(false && "TODO: not implemented");
@@ -200,7 +200,7 @@ static inline bool cpu_execute_ret(
 
 static inline bool cpu_execute_and(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_and inst
 ) {
     assert(false && "TODO: not implemented");
@@ -208,7 +208,7 @@ static inline bool cpu_execute_and(
 
 static inline bool cpu_execute_xor(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_xor inst
 ) {
     assert(false && "TODO: not implemented");
@@ -216,7 +216,7 @@ static inline bool cpu_execute_xor(
 
 static inline bool cpu_execute_inter(
     struct Cpu* self,
-    const struct CpuContext* ctx,
+    struct CpuContext ctx,
     struct Inst_inter inst
 ) {
     assert(false && "TODO: not implemented");
@@ -231,12 +231,12 @@ void cpu_init(struct Cpu* self, word_t stack_end) {
     memset(&self->registers, 0x00, sizeof self->registers);
 }
 
-bool cpu_fetch(struct Cpu* self, const struct CpuContext* ctx, struct Instruction* output) {
-    if (self->ip >= ctx->memory_len) {
+bool cpu_fetch(struct Cpu* self, struct CpuContext ctx, struct Instruction* output) {
+    if (self->ip >= ctx.memory_len) {
         assert(false && "TODO: not implemented");
     }
 
-    void* ptr = ctx->memory + self->ip;
+    void* ptr = ctx.memory + self->ip;
     memcpy(output, ptr, sizeof *output);
 
     self->ip += sizeof *output;
@@ -244,7 +244,7 @@ bool cpu_fetch(struct Cpu* self, const struct CpuContext* ctx, struct Instructio
     return true;
 }
 
-bool cpu_execute(struct Cpu* self, const struct CpuContext* ctx, struct Instruction inst) {
+bool cpu_execute(struct Cpu* self, struct CpuContext ctx, struct Instruction inst) {
     switch (inst.opcode) {
 #define INST(name) case Opcode_##name: return cpu_execute_##name(self, ctx, inst.variant.name);
         INSTRUCTIONS
@@ -253,19 +253,19 @@ bool cpu_execute(struct Cpu* self, const struct CpuContext* ctx, struct Instruct
     }
 }
 
-bool cpu_push_word(struct Cpu* self, struct CpuContext* ctx, word_t word) {
+bool cpu_push_word(struct Cpu* self, struct CpuContext ctx, word_t word) {
     if (self->sp < sizeof word) {
         assert(false && "TODO: not implemented");
     }
 
     self->sp -= sizeof word;
-    *(word_t*)(ctx->memory + self->sp) = word;
+    *(word_t*)(ctx.memory + self->sp) = word;
     return true;
 }
 
-bool cpu_pop_word(struct Cpu* self, struct CpuContext* ctx, word_t* output) {
+bool cpu_pop_word(struct Cpu* self, struct CpuContext ctx, word_t* output) {
     // FIXME: I'm not really sure how to check for the stack pointer, so for now it'll be left unchecked.
-    *output = *(word_t*)(ctx->memory + self->sp);
+    *output = *(word_t*)(ctx.memory + self->sp);
     self->sp += sizeof *output;
     return true;
 }
