@@ -15,6 +15,9 @@ $(BUILD_DIR)/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+test:
+	./run_tests.sh
+
 clean:
 	rm -rf $(BUILD_DIR)
 
