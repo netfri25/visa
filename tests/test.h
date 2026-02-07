@@ -5,10 +5,8 @@
 #include <time.h>
 
 #define KB 1024
-#define MB (1024*KB)
-#define GB (1024*MB)
 
-#define MEMORY_CAP (1*GB)
+#define MEMORY_CAP (1*KB)
 
 void* xmalloc(size_t size) {
     void* result = malloc(size);
