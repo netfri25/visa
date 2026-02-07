@@ -22,7 +22,7 @@ void test_add(struct Cpu* cpu) {
         .product = false,
     };
 
-    cpu_execute_arith(cpu, (struct CpuContext){}, inst);
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
         word_t const lhs = cpu->registers[Reg_R01].lane[i];
@@ -42,7 +42,7 @@ void test_sub(struct Cpu* cpu) {
         .product = false,
     };
 
-    cpu_execute_arith(cpu, (struct CpuContext){}, inst);
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
         word_t const lhs = cpu->registers[Reg_R01].lane[i];
@@ -62,7 +62,7 @@ void test_mul(struct Cpu* cpu) {
         .product = true,
     };
 
-    cpu_execute_arith(cpu, (struct CpuContext){}, inst);
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
         word_t const lhs = cpu->registers[Reg_R01].lane[i];
@@ -82,7 +82,7 @@ void test_div(struct Cpu* cpu) {
         .product = true,
     };
 
-    cpu_execute_arith(cpu, (struct CpuContext){}, inst);
+    assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
 
     for (size_t i = 0; i <= cpu->vlen; i++) {
         word_t const lhs = cpu->registers[Reg_R01].lane[i];
