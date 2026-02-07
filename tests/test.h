@@ -30,3 +30,15 @@ void random_init_buffer(word_t* buffer, size_t len) {
     }
 }
 
+void swap_words(word_t* a, word_t* b) {
+    word_t const temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void shuffle_buffer(word_t* buffer, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        size_t const j = rand() % len;
+        swap_words(&buffer[i], &buffer[j]);
+    }
+}
