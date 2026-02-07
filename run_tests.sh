@@ -10,21 +10,21 @@ run_test() {
     set -e
 
     SOURCE=$1
-    TARGET_NAME=$(basename $1 .c)
-    TARGET="/tmp/$TARGET_NAME"
+    TEST_NAME=$(basename $1 .c)
+    TARGET=$(mktemp)
 
     clang -fcolor-diagnostics -std=c23 $SOURCE -o $TARGET
 
     $TARGET &&
-        printf "test $TARGET_NAME ${GREEN}OK${NC}\n" ||
-        printf "test $TARGET_NAME ${RED}ERROR${NC}\n"
+        printf "test $TEST_NAME ${GREEN}OK${NC}\n" ||
+        printf "test $TEST_NAME ${RED}ERROR${NC}\n"
 
     rm $TARGET
 }
 
 for test_source_file in $(find $TEST_DIR -name "*.c")
 do
-    run_test $test_source_file &
+    run_test $test_source_file
 done
 
 wait
