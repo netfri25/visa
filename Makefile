@@ -1,3 +1,4 @@
+CC = clang -fcolor-diagnostics
 BUILD_DIR = build
 INCLUDE_DIR = ./src
 CFLAGS = -std=c23 -Wall -Wextra -pedantic -I$(INCLUDE_DIR)
