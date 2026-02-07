@@ -209,27 +209,13 @@ static inline bool cpu_execute_arith(
     return true;
 }
 
-static inline bool cpu_execute_jz(
-    struct Cpu* self,
-    struct CpuContext ctx,
-    struct Inst_jz inst
-) {
-    (void) ctx;
-
-    if (cpu_is_register_zero(self, inst.flag)) {
-        self->ip += inst.offset;
-    }
-
-    return true;
-}
-
 static inline bool cpu_execute_bz(
     struct Cpu* self,
     struct CpuContext ctx,
     struct Inst_bz inst
 ) {
     if (cpu_is_register_zero(self, inst.flag)) {
-        if (!cpu_push_word(self, ctx, self->ip)) {
+        if (inst.save_ip && !cpu_push_word(self, ctx, self->ip)) {
             return false;
         }
 

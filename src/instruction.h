@@ -9,7 +9,6 @@
     INST(memory) \
     INST(copy) \
     INST(arith) \
-    INST(jz) \
     INST(bz) \
     INST(ret) \
     INST(inter)
@@ -80,15 +79,10 @@ INSTRUCTION(arith, {
     enum Arith op : 3;
 });
 
-INSTRUCTION(jz, {
-    REGISTER_FIELD(flag);
-    PAD(4);
-    uint16_t offset;
-});
-
 INSTRUCTION(bz, {
     REGISTER_FIELD(flag);
-    PAD(4);
+    PAD(3);
+    bool save_ip : 1;
     uint16_t offset;
 });
 
@@ -112,7 +106,6 @@ union InstructionVariant {
 
     INSTRUCTION_FIELD(arith);
 
-    INSTRUCTION_FIELD(jz);
     INSTRUCTION_FIELD(bz);
     INSTRUCTION_FIELD(ret);
 
