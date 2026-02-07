@@ -123,6 +123,8 @@ static inline bool cpu_execute_copy(
     const struct CpuContext* ctx,
     struct Inst_copy inst
 ) {
+    (void)! ctx;
+
     struct RegisterWriter dst_writer = cpu_get_register_writer(self, inst.dst);
 
     VECTORIZE(self, i, {
