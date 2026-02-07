@@ -1,7 +1,5 @@
 #include "test.h"
 
-#include <stdio.h>
-
 struct Cpu* init(void) {
     struct Cpu* cpu = malloc(sizeof *cpu);
     cpu_init(cpu, 0);
