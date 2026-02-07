@@ -1,7 +1,7 @@
 #include "test.h"
 
 struct Cpu* init(void) {
-    struct Cpu* cpu = malloc(sizeof *cpu);
+    struct Cpu* cpu = xmalloc(sizeof *cpu);
     cpu_init(cpu, 0);
 
     random_init_buffer(cpu->registers[Reg_R01].lane, VECTOR_MAX_LANES);
