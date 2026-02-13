@@ -246,6 +246,9 @@ static inline bool cpu_execute_inter(
     struct CpuContext ctx,
     struct Inst_inter inst
 ) {
+    (void) self;
+    (void) ctx;
+    (void) inst;
     assert(false && "TODO: not implemented");
 }
 
