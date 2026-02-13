@@ -128,43 +128,41 @@ static inline bool cpu_execute_copy(
     return true;
 }
 
-typedef word_t (*arith_op_t)(word_t lhs, word_t rhs, word_t* rem);
+typedef word_t (*arith_op_t)(word_t lhs, word_t rhs);
 
-static word_t arith_op_add(word_t lhs, word_t rhs, word_t* rem) {
-    (void)! rem;
+static word_t arith_op_add(word_t lhs, word_t rhs) {
     return lhs + rhs;
 }
 
-static word_t arith_op_sub(word_t lhs, word_t rhs, word_t* rem) {
-    (void)! rem;
+static word_t arith_op_sub(word_t lhs, word_t rhs) {
     return lhs - rhs;
 }
 
-static word_t arith_op_mul(word_t lhs, word_t rhs, word_t* rem) {
-    // FIXME: it's popular to allow 2*word multiplication for the lhs. should this support it?
-    (void)! rem;
+static word_t arith_op_mul(word_t lhs, word_t rhs) {
     return lhs * rhs;
 }
 
-static word_t arith_op_div(word_t lhs, word_t rhs, word_t* rem) {
-    (void)! rem;
-
+static word_t arith_op_div(word_t lhs, word_t rhs) {
     if (rhs == 0) {
-        *rem = 0;
         return 0;
     }
 
-    *rem = lhs % rhs;
     return lhs / rhs;
 }
 
-static word_t arith_op_and(word_t lhs, word_t rhs, word_t* rem) {
-    (void)! rem;
+static word_t arith_op_mod(word_t lhs, word_t rhs) {
+    if (rhs == 0) {
+        return 0;
+    }
+
+    return lhs % rhs;
+}
+
+static word_t arith_op_and(word_t lhs, word_t rhs) {
     return lhs & rhs;
 }
 
-static word_t arith_op_xor(word_t lhs, word_t rhs, word_t* rem) {
-    (void)! rem;
+static word_t arith_op_xor(word_t lhs, word_t rhs) {
     return lhs ^ rhs;
 }
 
@@ -174,6 +172,7 @@ static inline arith_op_t get_arith_op(enum Arith op) {
     case Arith_SUB: return arith_op_sub;
     case Arith_MUL: return arith_op_mul;
     case Arith_DIV: return arith_op_div;
+    case Arith_MOD: return arith_op_mod;
     case Arith_AND: return arith_op_and;
     case Arith_XOR: return arith_op_xor;
     }
@@ -197,13 +196,10 @@ static inline bool cpu_execute_arith(
         word_t rhs = cpu_register_read(self, inst.rhs, i);
         if (inst.negate_rhs) rhs = ~rhs;
 
-        word_t rem = 0;
-        word_t dst = op(lhs, rhs, &rem);
-        if (inst.negate_rem) rem = ~rem;
+        word_t dst = op(lhs, rhs);
         if (inst.negate_dst) dst = ~dst;
 
         cpu_register_write(self, inst.dst, i, dst);
-        cpu_register_write(self, inst.rem, i, rem);
     });
 
     return true;

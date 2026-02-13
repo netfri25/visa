@@ -62,6 +62,7 @@ enum Arith {
     Arith_SUB,
     Arith_MUL,
     Arith_DIV,
+    Arith_MOD,
     Arith_AND,
     Arith_XOR,
 };
@@ -70,11 +71,10 @@ INSTRUCTION(arith, {
     REGISTER_FIELD(dst);
     REGISTER_FIELD(lhs);
     REGISTER_FIELD(rhs);
-    REGISTER_FIELD(rem);
+    PAD(5);
     bool negate_dst : 1;
     bool negate_lhs : 1;
     bool negate_rhs : 1;
-    bool negate_rem : 1;
     bool horizontal : 1;
     enum Arith op : 3;
 });

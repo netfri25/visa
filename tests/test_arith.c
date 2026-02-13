@@ -17,12 +17,11 @@ void test_add(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_RF,
         .op = Arith_ADD,
         .negate_dst = false,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -40,12 +39,11 @@ void test_sub(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_RF,
         .op = Arith_SUB,
         .negate_dst = false,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -63,12 +61,11 @@ void test_mul(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_RF,
         .op = Arith_MUL,
         .negate_dst = false,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -86,12 +83,11 @@ void test_div(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_R03,
         .op = Arith_DIV,
         .negate_dst = false,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -116,12 +112,11 @@ void test_nand(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_RF,
         .op = Arith_AND,
         .negate_dst = true,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -139,12 +134,11 @@ void test_or(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_RF,
         .op = Arith_AND,
         .negate_dst = true,
         .negate_lhs = true,
         .negate_rhs = true,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -162,12 +156,11 @@ void test_xor(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_R02,
-        .rem = Reg_RF,
         .op = Arith_XOR,
         .negate_dst = false,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
@@ -185,12 +178,11 @@ void test_not(struct Cpu* cpu) {
         .dst = Reg_R00,
         .lhs = Reg_R01,
         .rhs = Reg_RT,
-        .rem = Reg_RF,
         .op = Arith_XOR,
         .negate_dst = false,
         .negate_lhs = false,
         .negate_rhs = false,
-        .negate_rem = false,
+        .horizontal = false,
     };
 
     assert(cpu_execute_arith(cpu, (struct CpuContext){}, inst));
